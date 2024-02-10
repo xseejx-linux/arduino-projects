@@ -32,20 +32,18 @@ void setup(){
   Serial.begin(9600);
 }
 
-
+// Function to make Spaces on Display //
 void Space(int space){
   for(int s = 0; s<space; s++){
     	lcd.print(" ");
     }
 }
-
-void Clear(int Line, int Col){
-  lcd.setCursor(Col, Line);
-  for(int j = 0; j<16; j++){
-     lcd.print(" ");
-  }
+// Not Used //
+void Clear(){
+  lcd.print(" ");
 }
 
+// if the number is not >10 it will print a 0 before it-->Ex.(01)
 void SetZero(int p){
   if(p<10){
       lcd.print("0");
@@ -67,10 +65,15 @@ int i = 0;
 int j = 0;
 int s = 0;
 
+// Cursor Variable
+int c = 0;
+
+// Update The Time
 void UpdateTime(){
   int Line = 1;
   int Col = 0;
   if(!Modify){
+    // Mode = Normal Increasing of Time //
       if(i<24){
       lcd.setCursor(Col,Line);
       Space(4);
@@ -111,31 +114,90 @@ void UpdateTime(){
       lcd.print(s);
       }
   }else{
+    // Mode = Modification of Time //
     if(Pointer == 1){
       lcd.setCursor(Col,Line);
       i=(i>=0 && i<23) ? i + 1:0;
-      Space(4);
-      SetZero(i);
-      lcd.print(i);
-      lcd.print(":");
+      
+      
     }else if(Pointer == 2){
       lcd.setCursor(Col+7,Line);
       j=(j>=0 && j<59) ? j + 1:0;
-      SetZero(j);
-      lcd.print(j);
-      lcd.print(":");
+      
     }else if(Pointer == 3){
       lcd.setCursor(Col+10,Line);
-      s=(s>=0 && s<59) ? s + 1:0;
-      SetZero(s);
-      lcd.print(s);
+      s=(s>=0 && s<59) ? s + 1:0;     
     }
   }
   
 }
+// For showing the cursor and the time during modifications 
+void Modding(){
+  int Line = 1;
+  int Col = 0;
+  c++;
+      if(Pointer==1){
+        
+    	lcd.setCursor(Col+4,Line);        
+          if(c%2==0){
+            lcd.print("__");
+            lcd.print(":");
+          }else{
+            lcd.setCursor(Col+4,Line);
+            lcd.print(i/10);
+            lcd.print(i%10);
+            lcd.setCursor(Col+6,Line);
+            lcd.print(":");
+          }
+        
+
+      }else if(Pointer==2){
+        
+            lcd.setCursor(Col+4,Line);
+            lcd.print(i/10);
+            lcd.print(i%10);
+            lcd.setCursor(Col+6,Line);
+            lcd.print(":"); 
+        
+          if(c%2==0){
+            lcd.setCursor(Col+7,Line);
+            lcd.print("__");
+            lcd.print(":");
+          }else{
+            lcd.setCursor(Col+7,Line);
+            lcd.print(j/10);
+            lcd.print(j%10);
+            lcd.setCursor(Col+9,Line);
+            lcd.print(":");
+          }
+      }else if(Pointer==3){
+        	lcd.setCursor(Col+4,Line);
+            lcd.print(i/10);
+            lcd.print(i%10);
+            lcd.setCursor(Col+6,Line);
+            lcd.print(":");
+        	lcd.setCursor(Col+7,Line);
+            lcd.print(j/10);
+            lcd.print(j%10);
+            lcd.setCursor(Col+9,Line);
+            lcd.print(":");     
+        	if(c%2==0){
+            	lcd.setCursor(Col+10,Line);
+            	lcd.print("__");
+            
+       }else{
+            lcd.setCursor(Col+10,Line);
+            lcd.print(s/10);
+            lcd.print(s%10);
+            lcd.print(" ");
+          }
+  	  }
+}
 
 unsigned long previousTime = 0;
-const unsigned long interval = 1000; // 1 second interval
+unsigned long previousTime1 = 0;
+const unsigned long interval = 1000;// 1 second interval
+const unsigned long cursorspeed = 100;// 0.1 seconds for cursor speed
 
 void loop(){  
   unsigned long currentTime = millis();
@@ -149,11 +211,26 @@ void loop(){
     previousTime = currentTime;
     // Update Time Every Second
     if(!Modify){
-      s++;
+      // If not i Modification mode increase the time //
+      if(i>=23 && j >= 59 && s >= 59){
+        j++;
+        i++;
+      }
+      s++;      
       UpdateTime();
     }
     
+    
   }
+  // For the Cursor Speed
+  if (currentTime - previousTime1 >= cursorspeed) {
+    previousTime1 = currentTime;
+    // Update Time Every Second
+    if(Modify){
+      Modding();
+    }
+  }
+  
 
   // Button P2 [Controller]
   if (digitalRead(P2) && val == 0) {
@@ -166,7 +243,6 @@ void loop(){
     }
     if(Modify){
       Pointer=(Pointer>=0 && Pointer<3) ? Pointer + 1:0;
-      Serial.println(Pointer);
       if(Pointer == 0){
         Modify = false;
       }
